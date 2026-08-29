@@ -1,0 +1,33 @@
+name: Fetch Limgrave map asset
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fetch-limgrave-map.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Limgrave reference map
+        run: |
+          mkdir -p assets/images/maps
+          curl --fail --location --retry 3 \
+            -A 'Mozilla/5.0' \
+            -e 'https://gamewith.jp/eldenring/320143' \
+            'https://img.gamewith.jp/service/hd/images/eldenring_map_south_east_2.jpg' \
+            -o assets/images/maps/limgrave-reference.jpg
+          file assets/images/maps/limgrave-reference.jpg
+          test $(stat -c%s assets/images/maps/limgrave-reference.jpg) -gt 50000
+      - name: Commit map asset
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/images/maps/limgrave-reference.jpg
+          git diff --cached --quiet || git commit -m 'Add local Limgrave reference map'
+          git push
